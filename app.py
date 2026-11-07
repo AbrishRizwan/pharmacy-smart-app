@@ -91,6 +91,12 @@ st.markdown("""
         font-weight: 600 !important;
     }
     
+    /* FIX FOR ALERT NOTIFICATION BOXES (Image 1 fix: Black clear text inside alerts) */
+    div[data-testid="stAlert"] p, div[data-testid="stAlert"] span {
+        color: #0f172a !important;
+        font-weight: 700 !important;
+    }
+    
     /* MAIN BUTTONS STYLING */
     .stButton > button, .stDownloadButton > button {
         background-color: #1f6feb !important;
@@ -275,7 +281,7 @@ if page == "🏠 Store Dashboard":
 # =========================================================
 elif page == "🔮 AI Demand Forecaster":
     st.title("🔮 Machine Learning Medicine Demand Forecaster")
-    st.caption("Estimate daily unit demand from calendar features (year, month, weekday).")
+    st.caption("Predict exact unit demand combining multi-year historical seasonality with real-time parameters.")
     st.markdown("---")
 
     f_col1, f_col2, f_col3 = st.columns(3)
@@ -323,3 +329,180 @@ elif page == "🔮 AI Demand Forecaster":
 elif page == "🛒 POS Counter":
     st.title("🛒 Pharmacy Point of Sale (POS) Counter")
     st.caption("Fast billing counter with automated real-time inventory deduction.")
+    st.markdown("---")
+
+    pos_col1, pos_col2 = st.columns([1, 1])
+    with pos_col1:
+        st.markdown("#### Select Medicine")
+        pos_med = st.selectbox("Medicine:", options=list(st.session_state.inventory.keys()),
+                               format_func=lambda x: f"{st.session_state.inventory[x]['name']} (${st.session_state.inventory[x]['price']:.2f}) - Stock: {st.session_state.inventory[x]['stock']}", key="pos_select")
+        pos_qty = st.number_input("Quantity:", min_value=1, max_value=st.session_state.inventory[pos_med]["stock"] or 1, value=1)
+        
+        if st.button("➕ Add to Cart", use_container_width=True):
+            item_info = st.session_state.inventory[pos_med]
+            if pos_qty <= item_info["stock"]:
+                st.session_state.cart.append({
+                    "Code": pos_med, "Name": item_info["name"], "Price": item_info["price"], "Qty": pos_qty, "Total": item_info["price"] * pos_qty
+                })
+                st.success(f"Added {pos_qty}x {item_info['name']} to cart!")
+            else:
+                st.error("Insufficient stock!")
+
+    with pos_col2:
+        st.markdown("#### Current Receipt")
+        if st.session_state.cart:
+            cart_df = pd.DataFrame(st.session_state.cart)
+            st.dataframe(cart_df[["Name", "Qty", "Price", "Total"]], use_container_width=True, hide_index=True)
+            grand_total = cart_df["Total"].sum()
+            st.markdown(f"### **Total Payable: ${grand_total:,.2f}**")
+            
+            if st.button("💳 Complete Checkout & Print Invoice", use_container_width=True):
+                today_str = datetime.now().strftime("%Y-%m-%d")
+                for item in st.session_state.cart:
+                    code = item["Code"]
+                    qty = item["Qty"]
+                    st.session_state.inventory[code]["stock"] -= qty
+                    st.session_state.sales_history.append({"Date": today_str, "Medicine": item["Name"], "Qty": qty, "Revenue": item["Total"]})
+                
+                st.session_state.cart = []
+                st.balloons()
+                st.success("Transaction completed successfully!")
+                st.rerun()
+        else:
+            st.info("Cart is currently empty.")
+
+# =========================================================
+# PAGE 4: SALES ANALYTICS
+# =========================================================
+elif page == "📊 Sales Analytics":
+    st.title("📊 Sales History & Revenue Analytics")
+    st.caption("Daily, weekly, and monthly revenue performance tracking.")
+    st.markdown("---")
+
+    if st.session_state.sales_history:
+        sales_df = pd.DataFrame(st.session_state.sales_history)
+        sales_df["Date"] = pd.to_datetime(sales_df["Date"])
+        today = pd.to_datetime(datetime.now().strftime("%Y-%m-%d"))
+        
+        today_sales = sales_df[sales_df["Date"] == today]["Revenue"].sum()
+        week_sales = sales_df[sales_df["Date"] >= (today - pd.Timedelta(days=7))]["Revenue"].sum()
+        month_sales = sales_df[sales_df["Date"] >= (today - pd.Timedelta(days=30))]["Revenue"].sum()
+        
+        s_col1, s_col2, s_col3 = st.columns(3)
+        with s_col1: st.markdown(f'<div class="metric-card"><div class="metric-title">Today\'s Revenue</div><div class="metric-value-green">${today_sales:,.2f}</div></div>', unsafe_allow_html=True)
+        with s_col2: st.markdown(f'<div class="metric-card"><div class="metric-title">This Week\'s Revenue</div><div class="metric-value-blue">${week_sales:,.2f}</div></div>', unsafe_allow_html=True)
+        with s_col3: st.markdown(f'<div class="metric-card"><div class="metric-title">This Month\'s Revenue</div><div class="metric-value-green">${month_sales:,.2f}</div></div>', unsafe_allow_html=True)
+            
+        st.markdown("---")
+        st.markdown("#### 📈 Revenue Trend Chart")
+        daily_chart_df = sales_df.groupby("Date")["Revenue"].sum().reset_index()
+        fig_revenue = px.line(daily_chart_df, x="Date", y="Revenue", markers=True, template="plotly_dark", height=380)
+        st.plotly_chart(fig_revenue, use_container_width=True)
+        
+        st.markdown("#### 📜 Full Transaction Logs")
+        st.dataframe(sales_df.sort_values(by="Date", ascending=False), use_container_width=True, hide_index=True)
+
+# =========================================================
+# PAGE 5: MANAGE INVENTORY
+# =========================================================
+elif page == "➕ Manage Inventory":
+    st.title("➕ Register New Product / Restock Inventory")
+    st.caption("Add new pharma products or update existing stock quantities.")
+    st.markdown("---")
+
+    m_col1, m_col2 = st.columns([1, 1])
+    with m_col1:
+        st.markdown("#### Add New Product")
+        new_code = st.text_input("ATC / Product Code (e.g. N02XX):")
+        new_name = st.text_input("Medicine Name & Dosage:")
+        new_cat = st.selectbox("Category:", ["General Pain", "Anti-inflammatory", "Joint Relief", "Cardiovascular", "Neurology", "Respiratory", "Allergy", "Antibiotic"])
+        new_price = st.number_input("Unit Price ($):", min_value=0.1, value=5.0)
+        new_stock = st.number_input("Initial Stock Quantity:", min_value=1, value=50)
+        new_min = st.number_input("Minimum Alert Level:", min_value=1, value=20)
+        new_exp = st.date_input("Expiry Date:", datetime.now() + timedelta(days=365))
+        new_supp = st.text_input("Supplier Name:", "GSK Healthcare")
+        
+        if st.button("💾 Save Medicine to Inventory", use_container_width=True):
+            if new_code and new_name:
+                st.session_state.inventory[new_code] = {
+                    "name": new_name, "price": float(new_price), "stock": int(new_stock),
+                    "min_required": int(new_min), "category": new_cat,
+                    "expiry": new_exp.strftime("%Y-%m-%d"), "supplier": new_supp
+                }
+                st.success(f"Successfully added {new_name}!")
+                st.rerun()
+            else:
+                st.error("Please fill required fields (Code & Name)!")
+
+    with m_col2:
+        st.markdown("#### Restock Existing Product")
+        restock_code = st.selectbox("Select Medicine to Restock:", options=list(st.session_state.inventory.keys()),
+                                    format_func=lambda x: f"{st.session_state.inventory[x]['name']} (Current: {st.session_state.inventory[x]['stock']})", key="restock_sel")
+        added_qty = st.number_input("Add Units Received:", min_value=1, value=20)
+        
+        if st.button("📦 Update Stock Level", use_container_width=True):
+            st.session_state.inventory[restock_code]["stock"] += int(added_qty)
+            st.success(f"Added {added_qty} units! New Stock: {st.session_state.inventory[restock_code]['stock']}")
+            st.rerun()
+
+# =========================================================
+# PAGE 6: EXPIRY & DISCOUNTS
+# =========================================================
+elif page == "⏳ Expiry & Discounts":
+    st.title("⏳ Expiry Tracker & Smart Discount Engine")
+    st.caption("Flags near-expiry items to enable dynamic discount pricing before loss.")
+    st.markdown("---")
+
+    today_dt = datetime.now()
+    expiry_list = []
+    
+    for code, info in st.session_state.inventory.items():
+        exp_dt = datetime.strptime(info["expiry"], "%Y-%m-%d")
+        days_left = (exp_dt - today_dt).days
+        
+        if days_left <= 30:
+            status = "🔴 Critical (Expires < 30 Days)"
+            discount = "30% OFF Recommended"
+        elif days_left <= 60:
+            status = "🟡 Warning (Expires < 60 Days)"
+            discount = "15% OFF Recommended"
+        else:
+            status = "🟢 Safe"
+            discount = "Full Price"
+            
+        expiry_list.append({
+            "Code": code, "Medicine": info["name"], "Current Stock": info["stock"],
+            "Expiry Date": info["expiry"], "Days Remaining": days_left,
+            "Expiry Status": status, "Suggested Action": discount
+        })
+        
+    exp_df = pd.DataFrame(expiry_list)
+    st.dataframe(exp_df.sort_values(by="Days Remaining"), use_container_width=True, hide_index=True)
+
+# =========================================================
+# PAGE 7: SUPPLIER ORDERS
+# =========================================================
+elif page == "📄 Supplier Orders":
+    st.title("📄 Automated Supplier Purchase Order (PO) Generator")
+    st.caption("Generates printable restock requisitions for items below safety stock thresholds.")
+    st.markdown("---")
+
+    low_stock_items = [
+        {"Code": k, "Name": v["name"], "Category": v["category"], "Current Stock": v["stock"], "Required Order": v["min_required"] - v["stock"] + 20, "Supplier": v["supplier"]}
+        for k, v in st.session_state.inventory.items() if v["stock"] < v["min_required"]
+    ]
+    
+    if low_stock_items:
+        po_df = pd.DataFrame(low_stock_items)
+        st.warning("⚠️ The following products are below safety stock thresholds and require immediate ordering:")
+        st.dataframe(po_df, use_container_width=True, hide_index=True)
+        
+        st.download_button(
+            "📄 Download Purchase Order (CSV)",
+            po_df.to_csv(index=False),
+            file_name="purchase_order.csv",
+            mime="text/csv",
+            use_container_width=True,
+        )
+    else:
+        st.success("🎉 All stock levels are currently optimal. No supplier orders required!")
