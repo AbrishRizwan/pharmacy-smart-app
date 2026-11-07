@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 # 1. Page Configuration & Ultra-Modern Custom CSS Styling
 # ---------------------------------------------------------
 st.set_page_config(
-    page_title="Enterprise AI Pharmacy SaaS",
+    page_title="Smart Pharmacy Demand Forecaster",
     page_icon="💊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -44,7 +44,7 @@ st.markdown("""
         font-size: 13px !important;
     }
 
-    /* HIDE STREAMLIT RADIO CIRCLES & CONVERT TO SLEEK PILLS (LIKE REFERENCE IMAGE 3) */
+    /* HIDE STREAMLIT RADIO CIRCLES & CONVERT TO SLEEK PILLS */
     div[data-testid="stSidebar"] div[role="radiogroup"] label > div:first-child {
         display: none !important;
     }
@@ -71,7 +71,7 @@ st.markdown("""
         transform: translateX(4px);
     }
     
-    /* ACTIVE BUTTON STYLING (Image 3 Style Vibrant Gradient Fill) */
+    /* ACTIVE BUTTON STYLING */
     div[data-testid="stSidebar"] div[role="radiogroup"] label[data-checked="true"] {
         background: linear-gradient(135deg, #0052d4, #4364f7, #6fb1fc) !important;
         border: none !important;
@@ -92,7 +92,7 @@ st.markdown("""
     }
     
     /* MAIN BUTTONS STYLING */
-    .stButton > button {
+    .stButton > button, .stDownloadButton > button {
         background-color: #1f6feb !important;
         color: #ffffff !important;
         border: 1px solid #388bfd !important;
@@ -100,12 +100,12 @@ st.markdown("""
         padding: 10px 24px !important;
         transition: all 0.2s ease-in-out !important;
     }
-    .stButton > button:hover {
+    .stButton > button:hover, .stDownloadButton > button:hover {
         background-color: #388bfd !important;
         border-color: #58a6ff !important;
         box-shadow: 0 4px 12px rgba(56, 139, 253, 0.4) !important;
     }
-    .stButton > button p {
+    .stButton > button p, .stDownloadButton > button p {
         color: #ffffff !important;
         font-size: 15px !important;
         font-weight: 700 !important;
@@ -175,11 +175,12 @@ if "sales_history" not in st.session_state:
     ]
 
 # ---------------------------------------------------------
-# 4. SIDEBAR NAVIGATION MENU (WITH HIGH CONTRAST & CUSTOM CARDS)
+# 4. SIDEBAR NAVIGATION MENU
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("## 🤖 AI Smart Store")
-    st.markdown("<p style='color:#00f2fe !important; font-weight:700; margin-top:-12px; margin-bottom:15px;'>Enterprise SaaS Command Center</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#00f2fe !important; font-weight:700; margin-top:-12px; margin-bottom:5px;'>Demand Forecasting Demo</p>", unsafe_allow_html=True)
+    st.caption("Demo app: inventory and sales data are sample data.")
     st.markdown("---")
     
     st.markdown("<p style='color:#ffffff !important; font-weight:700; font-size:14px;'>Navigation Menu</p>", unsafe_allow_html=True)
@@ -200,7 +201,7 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # Glowing AI Card at the Bottom (Matching Reference Image 3)
+    # AI Engine Status Card
     st.markdown("""
     <div style="
         background: linear-gradient(135deg, #0052d4, #4364f7, #6fb1fc);
@@ -212,7 +213,7 @@ with st.sidebar:
     ">
         <h4 style="margin: 0; font-size: 15px; font-weight: bold; color: #ffffff !important;">🤖 AI Engine Status</h4>
         <p style="margin: 6px 0 0 0; font-size: 12px; color: #e0f2fe !important; font-weight: 500;">RandomForest Regressor Active</p>
-        <p style="margin: 2px 0 0 0; font-size: 12px; color: #ffffff !important; font-weight: 700;">🟢 Status: 98% Forecast Active</p>
+        <p style="margin: 2px 0 0 0; font-size: 12px; color: #ffffff !important; font-weight: 700;">🟢 Status: Model loaded</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -249,7 +250,7 @@ if page == "🏠 Store Dashboard":
     with col4:
         st.markdown(f'<div class="metric-card"><div class="metric-title">Near Expiry Alerts</div><div class="metric-value-orange">{near_expiry_count} Items</div></div>', unsafe_allow_html=True)
     with col5:
-        st.markdown(f'<div class="metric-card"><div class="metric-title">AI Engine</div><div class="metric-value-green">98% Active</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="metric-card"><div class="metric-title">AI Engine</div><div class="metric-value-green">Model Loaded</div></div>', unsafe_allow_html=True)
 
     st.markdown("### 📦 Live Inventory Monitor")
     inv_data = []
@@ -321,176 +322,4 @@ elif page == "🔮 AI Demand Forecaster":
 # =========================================================
 elif page == "🛒 POS Counter":
     st.title("🛒 Pharmacy Point of Sale (POS) Counter")
-    st.caption("Fast billing counter with automated real-time inventory deduction.")
-    st.markdown("---")
-
-    pos_col1, pos_col2 = st.columns([1, 1])
-    with pos_col1:
-        st.markdown("#### Select Medicine")
-        pos_med = st.selectbox("Medicine:", options=list(st.session_state.inventory.keys()),
-                               format_func=lambda x: f"{st.session_state.inventory[x]['name']} (${st.session_state.inventory[x]['price']:.2f}) - Stock: {st.session_state.inventory[x]['stock']}", key="pos_select")
-        pos_qty = st.number_input("Quantity:", min_value=1, max_value=st.session_state.inventory[pos_med]["stock"] or 1, value=1)
-        
-        if st.button("➕ Add to Cart", use_container_width=True):
-            item_info = st.session_state.inventory[pos_med]
-            if pos_qty <= item_info["stock"]:
-                st.session_state.cart.append({
-                    "Code": pos_med, "Name": item_info["name"], "Price": item_info["price"], "Qty": pos_qty, "Total": item_info["price"] * pos_qty
-                })
-                st.success(f"Added {pos_qty}x {item_info['name']} to cart!")
-            else:
-                st.error("Insufficient stock!")
-
-    with pos_col2:
-        st.markdown("#### Current Receipt")
-        if st.session_state.cart:
-            cart_df = pd.DataFrame(st.session_state.cart)
-            st.dataframe(cart_df[["Name", "Qty", "Price", "Total"]], use_container_width=True, hide_index=True)
-            grand_total = cart_df["Total"].sum()
-            st.markdown(f"### **Total Payable: ${grand_total:,.2f}**")
-            
-            if st.button("💳 Complete Checkout & Print Invoice", use_container_width=True):
-                today_str = datetime.now().strftime("%Y-%m-%d")
-                for item in st.session_state.cart:
-                    code = item["Code"]
-                    qty = item["Qty"]
-                    st.session_state.inventory[code]["stock"] -= qty
-                    st.session_state.sales_history.append({"Date": today_str, "Medicine": item["Name"], "Qty": qty, "Revenue": item["Total"]})
-                
-                st.session_state.cart = []
-                st.balloons()
-                st.success("Transaction completed successfully!")
-                st.rerun()
-        else:
-            st.info("Cart is currently empty.")
-
-# =========================================================
-# PAGE 4: SALES ANALYTICS
-# =========================================================
-elif page == "📊 Sales Analytics":
-    st.title("📊 Sales History & Revenue Analytics")
-    st.caption("Daily, weekly, and monthly revenue performance tracking.")
-    st.markdown("---")
-
-    if st.session_state.sales_history:
-        sales_df = pd.DataFrame(st.session_state.sales_history)
-        sales_df["Date"] = pd.to_datetime(sales_df["Date"])
-        today = pd.to_datetime(datetime.now().strftime("%Y-%m-%d"))
-        
-        today_sales = sales_df[sales_df["Date"] == today]["Revenue"].sum()
-        week_sales = sales_df[sales_df["Date"] >= (today - pd.Timedelta(days=7))]["Revenue"].sum()
-        month_sales = sales_df[sales_df["Date"] >= (today - pd.Timedelta(days=30))]["Revenue"].sum()
-        
-        s_col1, s_col2, s_col3 = st.columns(3)
-        with s_col1: st.markdown(f'<div class="metric-card"><div class="metric-title">Today\'s Revenue</div><div class="metric-value-green">${today_sales:,.2f}</div></div>', unsafe_allow_html=True)
-        with s_col2: st.markdown(f'<div class="metric-card"><div class="metric-title">This Week\'s Revenue</div><div class="metric-value-blue">${week_sales:,.2f}</div></div>', unsafe_allow_html=True)
-        with s_col3: st.markdown(f'<div class="metric-card"><div class="metric-title">This Month\'s Revenue</div><div class="metric-value-green">${month_sales:,.2f}</div></div>', unsafe_allow_html=True)
-            
-        st.markdown("---")
-        st.markdown("#### 📈 Revenue Trend Chart")
-        daily_chart_df = sales_df.groupby("Date")["Revenue"].sum().reset_index()
-        fig_revenue = px.line(daily_chart_df, x="Date", y="Revenue", markers=True, template="plotly_dark", height=380)
-        st.plotly_chart(fig_revenue, use_container_width=True)
-        
-        st.markdown("#### 📜 Full Transaction Logs")
-        st.dataframe(sales_df.sort_values(by="Date", ascending=False), use_container_width=True, hide_index=True)
-
-# =========================================================
-# PAGE 5: MANAGE INVENTORY
-# =========================================================
-elif page == "➕ Manage Inventory":
-    st.title("➕ Register New Product / Restock Inventory")
-    st.caption("Add new pharma products or update existing stock quantities.")
-    st.markdown("---")
-
-    m_col1, m_col2 = st.columns([1, 1])
-    with m_col1:
-        st.markdown("#### Add New Product")
-        new_code = st.text_input("ATC / Product Code (e.g. N02XX):")
-        new_name = st.text_input("Medicine Name & Dosage:")
-        new_cat = st.selectbox("Category:", ["General Pain", "Anti-inflammatory", "Joint Relief", "Cardiovascular", "Neurology", "Respiratory", "Allergy", "Antibiotic"])
-        new_price = st.number_input("Unit Price ($):", min_value=0.1, value=5.0)
-        new_stock = st.number_input("Initial Stock Quantity:", min_value=1, value=50)
-        new_min = st.number_input("Minimum Alert Level:", min_value=1, value=20)
-        new_exp = st.date_input("Expiry Date:", datetime.now() + timedelta(days=365))
-        new_supp = st.text_input("Supplier Name:", "GSK Healthcare")
-        
-        if st.button("💾 Save Medicine to Inventory", use_container_width=True):
-            if new_code and new_name:
-                st.session_state.inventory[new_code] = {
-                    "name": new_name, "price": float(new_price), "stock": int(new_stock),
-                    "min_required": int(new_min), "category": new_cat,
-                    "expiry": new_exp.strftime("%Y-%m-%d"), "supplier": new_supp
-                }
-                st.success(f"Successfully added {new_name}!")
-                st.rerun()
-            else:
-                st.error("Please fill required fields (Code & Name)!")
-
-    with m_col2:
-        st.markdown("#### Restock Existing Product")
-        restock_code = st.selectbox("Select Medicine to Restock:", options=list(st.session_state.inventory.keys()),
-                                    format_func=lambda x: f"{st.session_state.inventory[x]['name']} (Current: {st.session_state.inventory[x]['stock']})", key="restock_sel")
-        added_qty = st.number_input("Add Units Received:", min_value=1, value=20)
-        
-        if st.button("📦 Update Stock Level", use_container_width=True):
-            st.session_state.inventory[restock_code]["stock"] += int(added_qty)
-            st.success(f"Added {added_qty} units! New Stock: {st.session_state.inventory[restock_code]['stock']}")
-            st.rerun()
-
-# =========================================================
-# PAGE 6: EXPIRY & DISCOUNTS
-# =========================================================
-elif page == "⏳ Expiry & Discounts":
-    st.title("⏳ Expiry Tracker & Smart Discount Engine")
-    st.caption("Flags near-expiry items to enable dynamic discount pricing before loss.")
-    st.markdown("---")
-
-    today_dt = datetime.now()
-    expiry_list = []
-    
-    for code, info in st.session_state.inventory.items():
-        exp_dt = datetime.strptime(info["expiry"], "%Y-%m-%d")
-        days_left = (exp_dt - today_dt).days
-        
-        if days_left <= 30:
-            status = "🔴 Critical (Expires < 30 Days)"
-            discount = "30% OFF Recommended"
-        elif days_left <= 60:
-            status = "🟡 Warning (Expires < 60 Days)"
-            discount = "15% OFF Recommended"
-        else:
-            status = "🟢 Safe"
-            discount = "Full Price"
-            
-        expiry_list.append({
-            "Code": code, "Medicine": info["name"], "Current Stock": info["stock"],
-            "Expiry Date": info["expiry"], "Days Remaining": days_left,
-            "Expiry Status": status, "Suggested Action": discount
-        })
-        
-    exp_df = pd.DataFrame(expiry_list)
-    st.dataframe(exp_df.sort_values(by="Days Remaining"), use_container_width=True, hide_index=True)
-
-# =========================================================
-# PAGE 7: SUPPLIER ORDERS
-# =========================================================
-elif page == "📄 Supplier Orders":
-    st.title("📄 Automated Supplier Purchase Order (PO) Generator")
-    st.caption("Generates printable restock requisitions for items below safety stock thresholds.")
-    st.markdown("---")
-
-    low_stock_items = [
-        {"Code": k, "Name": v["name"], "Category": v["category"], "Current Stock": v["stock"], "Required Order": v["min_required"] - v["stock"] + 20, "Supplier": v["supplier"]}
-        for k, v in st.session_state.inventory.items() if v["stock"] < v["min_required"]
-    ]
-    
-    if low_stock_items:
-        po_df = pd.DataFrame(low_stock_items)
-        st.warning("⚠️ The following products are below safety stock thresholds and require immediate ordering:")
-        st.dataframe(po_df, use_container_width=True, hide_index=True)
-        
-        if st.button("📄 Export Supplier Purchase Order (PO)", use_container_width=True):
-            st.success("Purchase Order generated successfully! Copy details to send to pharmaceutical distributors.")
-    else:
-        st.success("🎉 All stock levels are currently optimal. No supplier orders required!")
+    st.caption("Fast billing counter with automated real-time inventory deduction
