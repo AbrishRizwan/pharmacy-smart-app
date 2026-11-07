@@ -275,7 +275,7 @@ if page == "🏠 Store Dashboard":
 # =========================================================
 elif page == "🔮 AI Demand Forecaster":
     st.title("🔮 Machine Learning Medicine Demand Forecaster")
-    st.caption("Predict exact unit demand combining multi-year historical seasonality with real-time parameters.")
+    st.caption("Estimate daily unit demand from calendar features (year, month, weekday).")
     st.markdown("---")
 
     f_col1, f_col2, f_col3 = st.columns(3)
