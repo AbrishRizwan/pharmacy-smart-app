@@ -1,83 +1,55 @@
 # 💊 Smart Pharmacy: Medicine Demand Forecasting
 
-[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
-[![Pandas](https://img.shields.io/badge/Pandas-Data%20Engineering-150458?logo=pandas&logoColor=white)](https://pandas.pydata.org/)
-[![Scikit-Learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
+![Python](https://img.shields.io/badge/Python-3.9+-blue)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-Random%20Forest-orange)
+![Streamlit](https://img.shields.io/badge/Streamlit-Demo-red)
 
 A Streamlit demo for medicine demand forecasting. Per-category Random Forest models predict daily unit sales from calendar features; the app compares predicted demand with stock levels. Inventory, POS and analytics pages use sample data.
 
----
+🔗 **Live demo:** https://pharmacy-smart-app-mpvpjkjmerseesf8bl7kmz.streamlit.app/
 
-## 📌 Problem Statement
+## 📌 Problem
+Understocking delays treatment, while overstocking causes holding costs and expiry waste. This project explores whether daily unit sales of medicine categories can be forecast from calendar information alone.
 
-Pharmaceutical inventory management requires a delicate balance between meeting patient demand and avoiding capital lockup:
-* **Understocking:** Can result in life-threatening treatment delays for critical medications.
-* **Overstocking:** Leads to high holding costs and waste due to batch expiration dates.
+## 🛠️ Approach
+- **Data:** Kaggle pharmaceutical sales dataset (`salesdaily.csv`), daily sales for 8 ATC medicine categories
+- **Features:** year, month, and weekday (one-hot encoded)
+- **Model:** one `RandomForestRegressor` per medicine category
+- **Evaluation:** time-based 80/20 split (train on earlier dates, test on later dates), compared with a baseline that always predicts the training-set average
 
-Traditional static reorder methods fail to account for weekly demand patterns, monthly seasonality, and autocorrelation. This project builds a multi-category forecasting pipeline to predict future daily unit sales from historical transactional data.
+## 📊 Results
+| Medicine | MAE | Baseline MAE | RMSE | R² |
+|---|---|---|---|---|
+| M01AB | 2.51 | 2.19 | 3.19 | -0.30 |
+| M01AE | 1.83 | 1.74 | 2.44 | -0.16 |
+| N02BA | 1.82 | 1.83 | 2.35 | -0.46 |
+| N02BE | 10.46 | 12.31 | 14.20 | 0.19 |
+| N05B | 3.82 | 3.38 | 4.77 | -0.29 |
+| N05C | 0.92 | 0.83 | 1.26 | -0.31 |
+| R03 | 6.05 | 5.81 | 8.70 | -0.13 |
+| R06 | 1.97 | 1.90 | 2.62 | -0.08 |
 
----
+**Key finding:** with calendar features only, the model beats the baseline for just one category (N02BE). For the others it does not outperform simply predicting the average. Daily sales appear to depend mostly on recent sales history, which this version does not use.
 
-## 🛠️ Data Pipeline & Feature Engineering
-
-The pipeline processes daily sales records across distinct therapeutic drug categories (e.g., analgesics, anti-inflammatories, antibiotics).
-
-1. **Time-Series Decomposition & Resampling:**
-   - Aggregated raw sales transactions into regular daily and weekly frequency intervals.
-   - Handled non-trading days and imputed zero-demand periods.
-2. **Feature Engineering:**
-   - **Lag Features:** 1-day, 7-day, 14-day, and 30-day historical sales lags to capture demand momentum.
-   - **Rolling Window Statistics:** 7-day and 14-day rolling means and standard deviations to capture moving trends and volatility.
-   - **Calendar & Seasonal Signals:** Day of week, day of month, month, quarter, and weekend flags.
-3. **Model Training:**
-   - Trained category-specific `RandomForestRegressor` models to capture non-linear demand interactions and temporal shifts without requiring strict stationarity assumptions.
-
----
-
-## 📊 Evaluation & Metrics
-
-The models are evaluated using out-of-time validation splits to mirror production deployment:
-
-| Metric | Purpose | Clinical/Operational Significance |
-| :--- | :--- | :--- |
-| **MAE (Mean Absolute Error)** | Quantifies average error in unit sales | Informs baseline reorder buffer size |
-| **RMSE (Root Mean Squared Error)** | Penalizes large forecasting errors heavily | Identifies unexpected demand spikes |
-| **R² Score** | Measures proportion of variance explained | Validates model fit against a naive baseline |
-
----
+## ⚠️ Limitations & Next Steps
+- Calendar-only features; no lag or rolling-window features yet
+- The app multiplies a single-day estimate by the forecast period instead of forecasting each day
+- Next step: add lag/rolling features and time-series cross-validation
+- Inventory, POS, expiry and analytics pages use sample data and were built with AI-assisted coding
 
 ## 📁 Repository Structure
-
-```text
-├── data/
-│   └── pharma_sales_data.csv          # Raw daily sales dataset
-├── models/
-│   └── random_forest_models.pkl       # Serialized trained category models
-├── notebooks/
-│   └── sales_forecasting_pipeline.ipynb # EDA, feature engineering, and model training
-├── src/
-│   ├── data_preprocessing.py          # Data cleaning and lag feature generation
-│   ├── train.py                       # Automated training pipeline script
-│   └── predict.py                     # Inference script for future sales forecasting
-├── requirements.txt                   # Project dependencies
-└── README.md                          # Project documentation
-````
-## How to Run Locally
-```bash
-# 1. Clone the repository
-git clone [https://github.com/AbrishRizwan/pharma-sales-forecasting.git](https://github.com/AbrishRizwan/pharma-sales-forecasting.git)
-
-# 2. Navigate to project directory
-cd pharma-sales-forecasting
-
-# 3. Install dependencies
-pip install -r requirements.txt
-
-# 4. Run the automated training and forecasting pipeline
-python src/train.py
-
+```
+├── app.py                 # Streamlit app
+├── medicine_models.pkl    # Trained per-category models
+├── model_columns.pkl      # Feature columns
+├── pharmacy_model_training.ipynb  # Model training notebook
+└── requirements.txt
 ```
 
-## Author
-
-[Abrish Rizwan](https://github.com/AbrishRizwan)
+## ▶️ Run Locally
+```bash
+git clone https://github.com/AbrishRizwan/pharmacy-smart-app.git
+cd pharmacy-smart-app
+pip install -r requirements.txt
+streamlit run app.py
+```
