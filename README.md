@@ -53,3 +53,7 @@ cd pharmacy-smart-app
 pip install -r requirements.txt
 streamlit run app.py
 ```
+
+## Author
+
+[Abrish Rizwan](https://github.com/AbrishRizwan)
