@@ -322,4 +322,4 @@ elif page == "🔮 AI Demand Forecaster":
 # =========================================================
 elif page == "🛒 POS Counter":
     st.title("🛒 Pharmacy Point of Sale (POS) Counter")
-    st.caption("Fast billing counter with automated real-time inventory deduction
+    st.caption("Fast billing counter with automated real-time inventory deduction.")
