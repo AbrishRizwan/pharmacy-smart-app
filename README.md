@@ -4,7 +4,7 @@
 [![Pandas](https://img.shields.io/badge/Pandas-Data%20Engineering-150458?logo=pandas&logoColor=white)](https://pandas.pydata.org/)
 [![Scikit-Learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
 
-An automated machine learning pipeline designed to forecast daily medicine sales across multiple pharmaceutical categories, helping pharmacies prevent stockouts and minimize inventory expiration.
+A Streamlit demo for medicine demand forecasting. Per-category Random Forest models predict daily unit sales from calendar features; the app compares predicted demand with stock levels. Inventory, POS and analytics pages use sample data.
 
 ---
 
