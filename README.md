@@ -1,4 +1,4 @@
-# 💊 Automated Pharmaceutical Sales Forecasting Pipeline
+# 💊 Smart Pharmacy: Medicine Demand Forecasting
 
 [![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
 [![Pandas](https://img.shields.io/badge/Pandas-Data%20Engineering-150458?logo=pandas&logoColor=white)](https://pandas.pydata.org/)
